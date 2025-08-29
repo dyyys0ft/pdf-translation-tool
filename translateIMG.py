@@ -60,7 +60,37 @@ def copy_image_to_clipboard(image_path: str):
     print(f"✅ Image copied to clipboard: {image_path}")
 
 
-# ⚙️ CONFIG
+def translate_image(path_source, path_target, file_name):
+    
+    try:
+        # 1. Open Google Translate (Images)
+        driver.get("https://translate.google.com/?hl=es&sl=auto&tl=es&op=images")
+        wait = WebDriverWait(driver, 10)
+
+        #click on english 
+        time.sleep(3)
+        driver.find_element(By.ID, "i59").click()
+
+        #copy image to translate
+        copy_image_to_clipboard(path_source)
+
+        #paste image
+        time.sleep(3)
+        button = driver.find_element(By.XPATH, "//button//span[text()='Pegar desde el portapapeles']")
+        button.click()
+        
+        time.sleep(4)
+        #download image
+        download_btn = driver.find_element(By.XPATH, "//button//span[text()='Descargar traducción']")
+        download_btn.click()
+        print("✅ Clicked 'Download translated image'")
+        print(f"✅ Saved screenshot: {path_target}/{file_name}")
+        
+    finally:
+
+        driver.quit()
+
+
 # If your file is inside a folder called "imgs" in the same directory as the script
 IMAGE_PATH = os.path.abspath("imgs/1")
 
@@ -71,36 +101,4 @@ options = Options()
 options.add_argument("--start-maximized")
 driver = setup_chrome_driver()
 
-
-try:
-    # 1. Open Google Translate (Images)
-    driver.get("https://translate.google.com/?hl=es&sl=auto&tl=es&op=images")
-    wait = WebDriverWait(driver, 10)
-
-    #click on english 
-    time.sleep(3)
-    driver.find_element(By.ID, "i59").click()
-
-    #copy image to translate
-    copy_image_to_clipboard(
-        r"C:\Users\dyane\OneDrive\Documentos\pdfEN_2_SP\translated_result.png"
-    )
-
-    #paste image
-    time.sleep(3)
-    button = driver.find_element(By.XPATH, "//button//span[text()='Pegar desde el portapapeles']")
-    button.click()
-    
-    time.sleep(4)
-    #download image
-    download_btn = driver.find_element(By.XPATH, "//button//span[text()='Descargar traducción']")
-    download_btn.click()
-    print("✅ Clicked 'Descargar traducción'")
-    
-    # Screenshot of result (full page for now)
-    driver.save_screenshot("1_translated_result.png")
-    print("✅ Saved screenshot: translated_result.png")
-    
-finally:
-
-    driver.quit()
+translate_image(os.path.join(os.getcwd(), "./imgs/1.png"),"/translated images","2t")
