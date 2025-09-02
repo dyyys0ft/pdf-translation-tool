@@ -97,36 +97,7 @@ def copy_image_to_clipboard(image_path: str):
 
     print(f"✅ Image copied to clipboard: {image_path}")
 
-
-def translate_image(path_source, path_target, file_name):
     
-    try:
-        # 1. Open Google Translate (Images)
-        driver.get("https://translate.google.com/?hl=es&sl=auto&tl=es&op=images")
-        wait = WebDriverWait(driver, 10)
-
-        #click on english 
-        time.sleep(3)
-        driver.find_element(By.ID, "i59").click()
-
-        #copy image to translate
-        copy_image_to_clipboard(path_source)
-
-        #paste image
-        time.sleep(3)
-        button = driver.find_element(By.XPATH, "//button//span[text()='Pegar desde el portapapeles']")
-        button.click()
-        
-        time.sleep(4)
-        #download image
-        download_btn = driver.find_element(By.XPATH, "//button//span[text()='Descargar traducción']")
-        download_btn.click()
-        print("✅ Clicked 'Download translated image'")
-        print(f"✅ Saved screenshot: {path_target}/{file_name}")
-        
-    finally:
-
-        driver.quit()
 
 def images_to_pdf(images_folder, output_pdf=None):
     # Get all PNG images in folder
@@ -163,7 +134,7 @@ def images_to_pdf(images_folder, output_pdf=None):
     print(f"✅ PDF created successfully: {output_path}")
 
 
-BOOK_PATH = ("./pdf book/libro1.pdf") 
+BOOK_PATH = "libro3.pdf"
 
 #pdf_to_images( pdf_path = BOOK_PATH)
 
@@ -174,10 +145,43 @@ options = Options()
 options.add_argument("--start-maximized")
 driver = setup_chrome_driver()
 
-count_translated_imgs = 4
+
+
+count_translated_imgs = file_count = sum(1 for f in os.listdir(os.path.join(os.getcwd(), "libro3")) if f.lower().endswith(".png"))
+print(" ✅ number of files", count_translated_imgs)
+
+driver.get("https://translate.google.com/?hl=es&sl=auto&tl=es&op=images")
+wait = WebDriverWait(driver, 10)
+driver.find_element(By.ID, "i59").click()
 
 for i in range(1,count_translated_imgs):
-  translate_image(os.path.join(os.getcwd(), "libro1\\"+str(i)+".png"),"\\translated images","2t") #change this
+        
+        # 1. Open Google Translate (Images)
+        path_source = os.path.join(os.getcwd(), "libro3\\"+str(i)+".png")        
+        
+        #click on english 
+        time.sleep(3)
+        
+        #copy image to translate
+        copy_image_to_clipboard(path_source)
 
+        #paste image
+        button = driver.find_element(By.XPATH, "//button//span[text()='Pegar desde el portapapeles']")
+        print("✅ PEGAR DESDE EL PORTAPAPELES")
+        button.click()
+        
+        #download image
+        time.sleep(20)
+        download_btn = driver.find_element(By.XPATH, "//button//span[text()='Descargar traducción']")
+        download_btn.click()
+        print("✅ DESCARGAR TRADUCCION")
+        print("✅ Clicked 'Download translated image'")
+
+        #delete image
+        delete_button = driver.find_element(By.CSS_SELECTOR, "button[aria-label='Borrar imagen']")
+        delete_button.click()
+        print("Clicked button!")
+        
+input()
 images_to_pdf("downloads/")
 

@@ -45,4 +45,4 @@ if __name__ == "__main__":
         output_name = sys.argv[2] if len(sys.argv) > 2 else None
         images_to_pdf(folder, output_name)
 
-images_to_pdf("libro_translated/")
+images_to_pdf("downloads/","libro3_translated")

@@ -2,7 +2,7 @@ import fitz  # PyMuPDF
 import os
 import sys
 
-def pdf_to_images(pdf_path , zoom=4):
+def pdf_to_images(pdf_path, zoom=4):
     # Open PDF
     doc = fitz.open(pdf_path)
     book_name = os.path.splitext(os.path.basename(pdf_path))[0]
@@ -18,7 +18,7 @@ def pdf_to_images(pdf_path , zoom=4):
         
         # Render page at high resolution (zoom factor)
         matrix = fitz.Matrix(zoom, zoom)  # 4x zoom = ~300-400 DPI
-        pix = page.get_pixmap(matrix=matrix, alpha=False) # type: ignore
+        pix = page.get_pixmap(matrix=matrix, alpha=False)  # type: ignore # Use getPixmap for older PyMuPDF versions
         
         # Save image
         output_path = os.path.join(book_name, f"{page_number + 1}.png")
@@ -33,6 +33,3 @@ if __name__ == "__main__":
         print("Usage: python pdf_to_images.py <your_pdf_file>")
     else:
         pdf_to_images(sys.argv[1])
-
-
-pdf_to_images( pdf_path = "./pdf book/libro1.pdf")
