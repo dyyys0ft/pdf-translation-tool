@@ -4,6 +4,7 @@
 3. join all the generated images into a pdf file
 """
 
+import shutil
 import fitz  # PyMuPDF
 import sys
 import time
@@ -21,10 +22,9 @@ from selenium.webdriver.chrome.options import Options
 from PIL import Image
 
 
-
-def pdf_to_images(pdf_path , zoom=4):
+def pdf_to_images(pdf_path, zoom=4):
     # Open PDF
-    doc = fitz.open(pdf_path) # type: ignore
+    doc = fitz.open(pdf_path)
     book_name = os.path.splitext(os.path.basename(pdf_path))[0]
     
     # Create folder for images
@@ -37,8 +37,8 @@ def pdf_to_images(pdf_path , zoom=4):
         page = doc[page_number]
         
         # Render page at high resolution (zoom factor)
-        matrix = fitz.Matrix(zoom, zoom)  # type: ignore # 4x zoom = ~300-400 DPI
-        pix = page.get_pixmap(matrix=matrix, alpha=False) # type: ignore
+        matrix = fitz.Matrix(zoom, zoom)  # 4x zoom = ~300-400 DPI
+        pix = page.get_pixmap(matrix=matrix, alpha=False)  # type: ignore # Use getPixmap for older PyMuPDF versions
         
         # Save image
         output_path = os.path.join(book_name, f"{page_number + 1}.png")
@@ -100,43 +100,55 @@ def copy_image_to_clipboard(image_path: str):
     
 
 def images_to_pdf(images_folder, output_pdf=None):
-    # Get all PNG images in folder
-    files = [f for f in os.listdir(images_folder) if f.lower().endswith(".png")]
+    # Get all PNG images in folder (with full path)
+    files = [os.path.join(images_folder, f) for f in os.listdir(images_folder) if f.lower().endswith(".png")]
     
     if not files:
         print("⚠️ No PNG images found in folder:", images_folder)
-        return
-    
-    # Sort numerically based on filename (e.g. 1.png, 2.png, 10.png)
-    def extract_number(filename):
-        match = re.search(r"(\d+)", filename)
-        return int(match.group(1)) if match else float("inf")
-    
-    files.sort(key=extract_number)
+        return None
+
+    # ✅ Sort by creation time (oldest first)
+    files.sort(key=os.path.getctime)
 
     # Open first image
-    first_image = Image.open(os.path.join(images_folder, files[0])).convert("RGB")
-    
+    first_image = Image.open(files[0]).convert("RGB")
+
     # Open remaining images
-    image_list = []
-    for file in files[1:]:
-        img_path = os.path.join(images_folder, file)
-        img = Image.open(img_path).convert("RGB")
-        image_list.append(img)
-    
+    image_list = [Image.open(f).convert("RGB") for f in files[1:]]
+
     # If output name not given, use folder name
     if output_pdf is None:
         output_pdf = os.path.basename(images_folder.rstrip("/\\")) + ".pdf"
-    
+
     output_path = os.path.join(images_folder, output_pdf)
+
+    # Save all images into a single PDF
     first_image.save(output_path, save_all=True, append_images=image_list)
-    
+
     print(f"✅ PDF created successfully: {output_path}")
+    return output_path
 
 
-BOOK_PATH = "libro3.pdf"
 
-#pdf_to_images( pdf_path = BOOK_PATH)
+def delete_directory(path):
+    """
+    Delete a directory and all its contents.
+    
+    Args:
+        path (str): Path to the directory.
+    """
+    if os.path.exists(path) and os.path.isdir(path):
+        shutil.rmtree(path)
+        print(f"✅ Deleted directory: {path}")
+    else:
+        print(f"⚠️ Directory does not exist: {path}")
+
+
+
+BOOK_NAME = "lib2"
+BOOK_PATH = BOOK_NAME + ".pdf"
+
+pdf_to_images( pdf_path = BOOK_PATH)
 
 setup_chrome_driver()
 
@@ -147,7 +159,7 @@ driver = setup_chrome_driver()
 
 
 
-count_translated_imgs = file_count = sum(1 for f in os.listdir(os.path.join(os.getcwd(), "libro3")) if f.lower().endswith(".png"))
+count_translated_imgs = file_count = sum(1 for f in os.listdir(os.path.join(os.getcwd(), BOOK_NAME)) if f.lower().endswith(".png")) + 1
 print(" ✅ number of files", count_translated_imgs)
 
 driver.get("https://translate.google.com/?hl=es&sl=auto&tl=es&op=images")
@@ -157,7 +169,7 @@ driver.find_element(By.ID, "i59").click()
 for i in range(1,count_translated_imgs):
         
         # 1. Open Google Translate (Images)
-        path_source = os.path.join(os.getcwd(), "libro3\\"+str(i)+".png")        
+        path_source = os.path.join(os.getcwd(), BOOK_NAME+"\\"+str(i)+".png")        
         
         #click on english 
         time.sleep(3)
@@ -182,6 +194,8 @@ for i in range(1,count_translated_imgs):
         delete_button.click()
         print("Clicked button!")
         
-input()
+
 images_to_pdf("downloads/")
+delete_directory("/"+BOOK_NAME)
+
 
